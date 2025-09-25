@@ -15,13 +15,13 @@ variable "location" {
 variable "app_name" {
   description = "Name of the web application"
   type        = string
-  default     = "securewebapp3390"
+  default     = "securewebapp6290"
 }
 
 variable "key_vault_name" {
   description = "Name of the Key Vault"
   type        = string
-  default     = "kv-securewebapp3390"
+  default     = "kv-securewebapp6290"
 }
 
 variable "app_service_sku" {
