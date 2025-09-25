@@ -1,0 +1,96 @@
+name: Secure CI/CD
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-test-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      # 🔍 SAST (CodeQL)
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: csharp
+
+      - name: Build
+        run: dotnet build --configuration Release
+
+      - name: Test
+        run: dotnet test --configuration Release
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+
+      # 📦 Dependency Review
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+
+      # 🚀 Deploy to staging
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy to staging
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
+          slot-name: staging
+          package: .
+
+      # ✅ Health Check
+      - name: Health check staging
+        run: |
+          for i in {1..10}; do
+            curl -fs https://${{ secrets.AZURE_WEBAPP_NAME }}-staging.azurewebsites.net && break
+            sleep 10
+          done
+
+      # 🔒 DAST (OWASP ZAP)
+      - name: OWASP ZAP Scan
+        uses: zaproxy/action-baseline@v0.10.0
+        with:
+          target: https://${{ secrets.AZURE_WEBAPP_NAME }}-staging.azurewebsites.net
+          fail_action: false
+
+      # 🔑 Validate Key Vault
+      - name: Validate Key Vault Secret
+        run: |
+          SECRET=$(az keyvault secret show \
+            --vault-name ${{ secrets.KV_NAME }} \
+            --name DbPassword \
+            --query value -o tsv)
+          if [ -z "$SECRET" ]; then
+            echo "❌ Failed to retrieve secret from Key Vault"
+            exit 1
+          else
+            echo "✅ Successfully retrieved secret from Key Vault"
+          fi
+
+      # 👀 Manual approval
+      - name: Await approval before production swap
+        uses: chrnorm/deployment-approval@v2
+        with:
+          approvers: user1,user2
+
+      # 🔄 Swap staging → production
+      - name: Swap to production
+        run: |
+          az webapp deployment slot swap \
+            -g ${{ secrets.AZURE_RG }} \
+            -n ${{ secrets.AZURE_WEBAPP_NAME }} \
+            --slot staging --target-slot production
