@@ -45,6 +45,36 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      # 🏗️ Setup Terraform
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ~1.0
+
+      # 🏗️ Terraform Init
+      - name: Terraform Init
+        run: |
+          cd infra
+          terraform init
+
+      # 🏗️ Terraform Validate
+      - name: Terraform Validate
+        run: |
+          cd infra
+          terraform validate
+
+      # 🏗️ Terraform Plan
+      - name: Terraform Plan
+        run: |
+          cd infra
+          terraform plan -out=tfplan
+
+      # 🏗️ Terraform Apply
+      - name: Terraform Apply
+        run: |
+          cd infra
+          terraform apply -auto-approve tfplan
+
       - name: Deploy to staging
         uses: azure/webapps-deploy@v3
         with:
@@ -83,9 +113,13 @@ jobs:
 
       # 👀 Manual approval
       - name: Await approval before production swap
-        uses: chrnorm/deployment-approval@v2
+        uses: trstringer/manual-approval@v1
         with:
-          approvers: user1,user2
+          secret: ${{ github.token }}
+          approvers: ${{ secrets.APPROVERS }}
+          minimum-approvals: 1
+          issue-title: "Deploy to Production"
+          issue-body: "Please approve or deny the deployment to production"
 
       # 🔄 Swap staging → production
       - name: Swap to production
