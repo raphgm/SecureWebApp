@@ -2,10 +2,10 @@
 # You can customize these values as needed
 
 resource_group_name = "SecureRG"
-location           = "East US"
+location           = "West Europe"
 app_name           = "securewebapp6290"
 key_vault_name     = "kv-securewebapp6290"
-app_service_sku    = "B1"
+app_service_sku    = "S1"
 db_password        = "SecurePassword123!"
 
 tags = {

@@ -9,7 +9,7 @@ variable "resource_group_name" {
 variable "location" {
   description = "Azure region where resources will be created"
   type        = string
-  default     = "East US"
+  default     = "West Europe"
 }
 
 variable "app_name" {
@@ -27,7 +27,7 @@ variable "key_vault_name" {
 variable "app_service_sku" {
   description = "SKU for the App Service Plan"
   type        = string
-  default     = "B1"
+  default     = "S1"
 }
 
 variable "db_password" {
