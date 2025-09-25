@@ -96,9 +96,12 @@ jobs:
           echo "Importing staging slot..."
           terraform import azurerm_linux_web_app_slot.staging /subscriptions/$(az account show --query id -o tsv)/resourceGroups/${{ secrets.AZURE_RG }}/providers/Microsoft.Web/sites/${{ secrets.AZURE_WEBAPP_NAME }}/slots/staging || true
           
-          # Import Key Vault secret - always try since it might exist
+          # Import Key Vault secret with version - get the secret ID with version
           echo "Importing Key Vault secret..."
-          terraform import azurerm_key_vault_secret.db_password https://${{ secrets.KV_NAME }}.vault.azure.net/secrets/DbPassword || true
+          SECRET_ID=$(az keyvault secret show --vault-name ${{ secrets.KV_NAME }} --name DbPassword --query id -o tsv 2>/dev/null || echo "")
+          if [ -n "$SECRET_ID" ]; then
+            terraform import azurerm_key_vault_secret.db_password "$SECRET_ID" || true
+          fi
           
           echo "Running terraform plan..."
           terraform plan -out=tfplan
