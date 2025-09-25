@@ -83,15 +83,30 @@ jobs:
           cd infra
           
           # Import existing resources if they don't exist in state
+          echo "Importing existing Azure resources..."
           terraform import azurerm_resource_group.main /subscriptions/$(az account show --query id -o tsv)/resourceGroups/${{ secrets.AZURE_RG }} || true
           terraform import azurerm_linux_web_app.main /subscriptions/$(az account show --query id -o tsv)/resourceGroups/${{ secrets.AZURE_RG }}/providers/Microsoft.Web/sites/${{ secrets.AZURE_WEBAPP_NAME }} || true
           terraform import azurerm_service_plan.main /subscriptions/$(az account show --query id -o tsv)/resourceGroups/${{ secrets.AZURE_RG }}/providers/Microsoft.Web/serverFarms/SecurePlan || true
           
-          # Check if staging slot exists and import if needed
+          # Import Key Vault if it exists
+          if az keyvault show --name ${{ secrets.KV_NAME }} >/dev/null 2>&1; then
+            echo "Importing Key Vault..."
+            terraform import azurerm_key_vault.main /subscriptions/$(az account show --query id -o tsv)/resourceGroups/${{ secrets.AZURE_RG }}/providers/Microsoft.KeyVault/vaults/${{ secrets.KV_NAME }} || true
+          fi
+          
+          # Import staging slot if it exists
           if az webapp deployment slot show --name ${{ secrets.AZURE_WEBAPP_NAME }} --resource-group ${{ secrets.AZURE_RG }} --slot staging >/dev/null 2>&1; then
+            echo "Importing staging slot..."
             terraform import azurerm_linux_web_app_slot.staging /subscriptions/$(az account show --query id -o tsv)/resourceGroups/${{ secrets.AZURE_RG }}/providers/Microsoft.Web/sites/${{ secrets.AZURE_WEBAPP_NAME }}/slots/staging || true
           fi
           
+          # Import Key Vault secret if Key Vault exists
+          if az keyvault secret show --vault-name ${{ secrets.KV_NAME }} --name DbPassword >/dev/null 2>&1; then
+            echo "Importing Key Vault secret..."
+            terraform import azurerm_key_vault_secret.db_password https://${{ secrets.KV_NAME }}.vault.azure.net/secrets/DbPassword || true
+          fi
+          
+          echo "Running terraform plan..."
           terraform plan -out=tfplan
 
       # 🏗️ Terraform Apply
