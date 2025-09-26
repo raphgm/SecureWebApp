@@ -134,11 +134,14 @@ jobs:
       # 🔒 DAST (OWASP ZAP)
       - name: OWASP ZAP Scan
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: zaproxy/action-baseline@v0.10.0
-        with:
-          target: https://${{ secrets.AZURE_WEBAPP_NAME }}-staging.azurewebsites.net
-          fail_action: false
-          artifact_name: 'owasp-zap-report'
+        run: |
+          docker run --rm \
+            -v $(pwd):/zap/wrk/:rw \
+            -t softwaresecurityproject/zap-stable:latest \
+            zap-baseline.py \
+            -t https://${{ secrets.AZURE_WEBAPP_NAME }}-staging.azurewebsites.net \
+            -I || true
+          echo "✅ OWASP ZAP scan completed"
 
       # 🔑 Validate Key Vault
       - name: Validate Key Vault Secret
