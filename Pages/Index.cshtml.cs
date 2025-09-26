@@ -12,6 +12,8 @@ public class IndexModel : PageModel
         _logger = logger;
     }
 
+    public string SKILL { get; set; } = "ASP.NET Core";
+
     public void OnGet()
     {
 

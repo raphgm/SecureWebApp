@@ -2,9 +2,23 @@
 @model IndexModel
 @{
     ViewData["Title"] = "Home page";
+    var SKILL = Model.SKILL;
 }
 
 <div class="text-center">
     <h1 class="display-4">Welcome</h1>
     <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
 </div>
+
+<div class="skill-section">
+    <div class="skill-box">
+        <h3>@SKILL</h3>
+        <p>Building<br>Production-Grade<br>Solutions</p>
+    </div>
+</div>
+
+<style>
+    .skill-box p {
+        margin-top: 0;
+    }
+</style>
