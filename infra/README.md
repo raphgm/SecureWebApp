@@ -74,7 +74,7 @@ The workflow is configured to automatically run Terraform when you push to the m
 - `AZURE_WEBAPP_NAME` - Name of your web app (should match `app_name` in terraform.tfvars)
 - `AZURE_RG` - Resource group name (should match `resource_group_name` in terraform.tfvars)
 - `KV_NAME` - Key Vault name (should match `key_vault_name` in terraform.tfvars)
-- `APPROVERS` - GitHub usernames for manual approval (comma-separated)
+- `APPROVERS` - GitHub usernames for manual approval (comma-separated) this is usually the username of your account
 
 ## Customization
 
